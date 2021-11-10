@@ -455,8 +455,13 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) {
 
       case SaveMode.Overwrite =>
         val conf = df.sparkSession.sessionState.conf
+        val partitionOverwriteMode = extraOptions.get("partitionOverwriteMode")
+          // scalastyle:off caselocale
+          .map(mode => PartitionOverwriteMode.withName(mode.toUpperCase))
+          // scalastyle:on caselocale
+          .getOrElse(conf.partitionOverwriteMode)
         val dynamicPartitionOverwrite = table.table.partitioning.size > 0 &&
-          conf.partitionOverwriteMode == PartitionOverwriteMode.DYNAMIC
+          partitionOverwriteMode == PartitionOverwriteMode.DYNAMIC
 
         if (dynamicPartitionOverwrite) {
           OverwritePartitionsDynamic.byPosition(table, df.logicalPlan, extraOptions.toMap)
